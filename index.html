@@ -76,6 +76,19 @@ canvas { display: block; cursor: crosshair; }
 
 .range-val { font-size: 0.75rem; color: var(--accent); text-align: right; }
 
+/* AI GENERATE */
+.ai-section { border-color: rgba(124,58,237,0.4) !important; background: linear-gradient(135deg, rgba(124,58,237,0.07), rgba(56,139,253,0.05)) !important; }
+.btn-ai { background: linear-gradient(135deg, #7c3aed, #388bfd); color: #fff; font-size: 0.9rem; font-weight: 700; border: none; padding: 11px; border-radius: var(--radius); width: 100%; cursor: pointer; margin-top: 10px; transition: opacity 0.15s; }
+.btn-ai:hover { opacity: 0.85; }
+.btn-ai:disabled { opacity: 0.45; cursor: not-allowed; }
+.gen-status { font-size: 0.78rem; text-align: center; margin-top: 8px; min-height: 18px; transition: all 0.2s; }
+.gen-status.loading { color: var(--accent); }
+.gen-status.success { color: var(--green); }
+.gen-status.error { color: var(--red); }
+.ai-prompt-wrap { position: relative; }
+.ai-prompt-wrap textarea { padding-right: 10px; resize: none; }
+.ai-badge { display: inline-block; background: linear-gradient(135deg,#7c3aed,#388bfd); color:#fff; font-size:0.62rem; font-weight:700; border-radius:4px; padding:2px 6px; margin-left:6px; vertical-align:middle; letter-spacing:0.5px; }
+
 @media (max-width: 768px) {
   .app { grid-template-columns: 1fr; height: auto; }
   .canvas-area { padding: 16px; }
@@ -89,6 +102,17 @@ canvas { display: block; cursor: crosshair; }
 <div class="app">
   <!-- SIDEBAR -->
   <div class="sidebar">
+
+    <!-- AI GENERATE -->
+    <div class="section ai-section">
+      <div class="section-title">✨ AI Generate <span class="ai-badge">SMART</span></div>
+      <label>Describe your thumbnail topic</label>
+      <div class="ai-prompt-wrap">
+        <textarea id="ai-prompt" rows="3" placeholder="e.g. Top 5 ways to save money in 2026&#10;e.g. Morning routine for productivity&#10;e.g. How to grow on Instagram fast"></textarea>
+      </div>
+      <button class="btn-ai" onclick="generateText()" id="gen-btn">✨ Generate Text</button>
+      <div class="gen-status" id="gen-status"></div>
+    </div>
 
     <!-- PLATFORM -->
     <div class="section">
@@ -504,6 +528,46 @@ function resetAll() {
   setTextLayer(0);
   setOverlay('none');
   render();
+}
+
+// ── AI GENERATE ───────────────────────────────────────────────────────────
+async function generateText() {
+  const prompt = document.getElementById('ai-prompt').value.trim();
+  if (!prompt) {
+    const el = document.getElementById('gen-status');
+    el.className = 'gen-status error'; el.textContent = '✗ Please describe your thumbnail first.'; return;
+  }
+  const btn = document.getElementById('gen-btn');
+  const status = document.getElementById('gen-status');
+  btn.disabled = true; btn.textContent = '⏳ Generating...';
+  status.className = 'gen-status loading'; status.textContent = 'AI is writing your text...';
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description: prompt, platform })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    // Apply to layers
+    if (data.title)    { layers[0].text = data.title; }
+    if (data.subtitle) { layers[1].text = data.subtitle; }
+    if (data.extra)    { layers[2].text = data.extra; }
+
+    // Refresh active layer UI
+    setTextLayer(activeLayer);
+    render();
+
+    status.className = 'gen-status success';
+    status.textContent = '✓ Done! Text applied — edit each layer as needed.';
+  } catch(e) {
+    status.className = 'gen-status error';
+    status.textContent = '✗ ' + (e.message || 'Generation failed');
+  } finally {
+    btn.disabled = false; btn.textContent = '✨ Generate Text';
+  }
 }
 
 // ── UTILS ──────────────────────────────────────────────────────────────────
