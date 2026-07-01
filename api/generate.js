@@ -54,7 +54,7 @@ Critical rules:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 1.1, maxOutputTokens: 300, topP: 0.95 }
+          generationConfig: { temperature: 1.0, maxOutputTokens: 300, topP: 0.95 }
         })
       }
     );
