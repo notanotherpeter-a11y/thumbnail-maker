@@ -69,10 +69,20 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 .canvas-wrap { position: relative; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
 canvas { display: block; cursor: crosshair; }
 .canvas-info { font-size: 0.8rem; color: var(--muted); text-align: center; }
-.canvas-actions { display: flex; gap: 10px; }
+.canvas-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 .dl-btn { padding: 10px 24px; border-radius: var(--radius); border: none; font-size: 0.9rem; font-weight: 600; cursor: pointer; background: var(--green); color: #fff; }
 .dl-btn:hover { opacity: 0.85; }
 .reset-btn { padding: 10px 20px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg3); color: var(--text); font-size: 0.9rem; cursor: pointer; }
+/* Save modal */
+.save-modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000; align-items:center; justify-content:center; flex-direction:column; gap:0; }
+.save-modal-bg.open { display:flex; }
+.save-modal-img { max-width:92vw; max-height:72vh; border-radius:10px; box-shadow:0 8px 40px rgba(0,0,0,0.8); display:block; }
+.save-modal-hint { color:#fff; font-size:0.95rem; text-align:center; padding:18px 20px 6px; font-weight:600; }
+.save-modal-sub { color:#aaa; font-size:0.8rem; text-align:center; padding:0 20px 18px; }
+.save-modal-close { background:var(--bg3); color:var(--text); border:1px solid var(--border); border-radius:var(--radius); padding:10px 32px; font-size:0.9rem; cursor:pointer; margin-bottom:24px; }
+.save-modal-actions { display:flex; gap:10px; margin-top:4px; margin-bottom:8px; }
+.save-modal-dl { background:var(--green); color:#fff; border:none; border-radius:var(--radius); padding:10px 24px; font-size:0.88rem; font-weight:700; cursor:pointer; }
+.save-modal-dl.jpg { background:var(--yellow); color:#000; }
 
 .range-val { font-size: 0.75rem; color: var(--accent); text-align: right; }
 
@@ -261,9 +271,21 @@ canvas { display: block; cursor: crosshair; }
     </div>
     <div class="canvas-info" id="canvas-info">Click on canvas to reposition selected text layer</div>
     <div class="canvas-actions">
-      <button class="dl-btn" onclick="downloadPNG()">⬇ Download PNG</button>
-      <button class="dl-btn" onclick="downloadJPG()" style="background:var(--yellow);color:#000">⬇ Download JPG</button>
+      <button class="dl-btn" onclick="saveImage('png')">📥 Save PNG</button>
+      <button class="dl-btn" onclick="saveImage('jpg')" style="background:var(--yellow);color:#000">📥 Save JPG</button>
       <button class="reset-btn" onclick="resetAll()">Reset</button>
+    </div>
+
+    <!-- SAVE MODAL (iOS long-press helper) -->
+    <div class="save-modal-bg" id="save-modal" onclick="closeSaveModal(event)">
+      <div class="save-modal-hint" id="save-hint">👆 Long press the image below → <strong>Save to Photos</strong></div>
+      <div class="save-modal-sub" id="save-sub">Or tap the buttons to download</div>
+      <img class="save-modal-img" id="save-preview" src="" alt="Thumbnail preview">
+      <div class="save-modal-actions">
+        <button class="save-modal-dl" id="save-dl-png" onclick="triggerDownload('png')">⬇ Download PNG</button>
+        <button class="save-modal-dl jpg" id="save-dl-jpg" onclick="triggerDownload('jpg')">⬇ Download JPG</button>
+      </div>
+      <button class="save-modal-close" onclick="closeSaveModal()">✕ Close</button>
     </div>
   </div>
 </div>
@@ -505,18 +527,42 @@ function render() {
   }
 }
 
-// ── DOWNLOAD ───────────────────────────────────────────────────────────────
-function downloadPNG() {
+// ── SAVE / DOWNLOAD ────────────────────────────────────────────────────────
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+const isMobile = /Mobi|Android/i.test(navigator.userAgent) || isIOS;
+
+function saveImage(fmt) {
+  const dataUrl = fmt === 'png'
+    ? canvas.toDataURL('image/png')
+    : canvas.toDataURL('image/jpeg', 0.95);
+
+  if (isIOS) {
+    // iOS Safari: can't trigger download — show full-size image, user long-presses to save
+    document.getElementById('save-preview').src = dataUrl;
+    document.getElementById('save-modal').classList.add('open');
+    document.getElementById('save-dl-png').dataset.url = canvas.toDataURL('image/png');
+    document.getElementById('save-dl-jpg').dataset.url = canvas.toDataURL('image/jpeg', 0.95);
+  } else {
+    // Android / desktop: trigger download directly
+    const a = document.createElement('a');
+    a.download = `thumbnail-${platform}.${fmt}`;
+    a.href = dataUrl;
+    a.click();
+  }
+}
+
+function triggerDownload(fmt) {
+  const btn = document.getElementById(fmt === 'png' ? 'save-dl-png' : 'save-dl-jpg');
   const a = document.createElement('a');
-  a.download = `thumbnail-${platform}.png`;
-  a.href = canvas.toDataURL('image/png');
+  a.download = `thumbnail-${platform}.${fmt}`;
+  a.href = btn.dataset.url || canvas.toDataURL(fmt === 'png' ? 'image/png' : 'image/jpeg', 0.95);
   a.click();
 }
-function downloadJPG() {
-  const a = document.createElement('a');
-  a.download = `thumbnail-${platform}.jpg`;
-  a.href = canvas.toDataURL('image/jpeg', 0.95);
-  a.click();
+
+function closeSaveModal(e) {
+  if (!e || e.target === document.getElementById('save-modal')) {
+    document.getElementById('save-modal').classList.remove('open');
+  }
 }
 
 // ── RESET ──────────────────────────────────────────────────────────────────
