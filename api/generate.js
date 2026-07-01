@@ -63,7 +63,9 @@ Critical rules:
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) return res.status(500).json({ error: 'No response from AI' });
 
-    const jsonMatch = text.match(/\{[\s\S]*?\}/);
+    // Strip markdown code fences if present (gemini-2.5 wraps in ```json ... ```)
+    const stripped = text.replace(/```(?:json)?\n?/g, '').trim();
+    const jsonMatch = stripped.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return res.status(500).json({ error: 'Could not parse AI response' });
 
     const result = JSON.parse(jsonMatch[0]);
