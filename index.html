@@ -484,6 +484,29 @@ function render() {
 
     const tx = W * l.x / 100;
     const ty = H * l.y / 100;
+    const maxW = W * 0.92; // 4% padding each side
+
+    // Word-wrap: split manual newlines first, then wrap each line to maxW
+    function wrapLine(text) {
+      const words = text.split(' ');
+      const result = [];
+      let current = '';
+      for (const word of words) {
+        const test = current ? current + ' ' + word : word;
+        if (ctx.measureText(test).width > maxW && current) {
+          result.push(current);
+          current = word;
+        } else {
+          current = test;
+        }
+      }
+      if (current) result.push(current);
+      return result.length ? result : [text];
+    }
+    const lines = l.text.split('\n').flatMap(wrapLine);
+    const lh = l.size * 1.25;
+    const blockH = (lines.length - 1) * lh;
+    const startY = ty - blockH / 2;
 
     // shadow
     if (l.shadow === 'soft') { ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 12; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2; }
@@ -495,16 +518,10 @@ function render() {
       ctx.lineWidth = l.strokeW * 2;
       ctx.strokeStyle = l.stroke;
       ctx.lineJoin = 'round';
-      const lines = l.text.split('\n');
-      const lh = l.size * 1.2;
-      const startY = ty - ((lines.length - 1) * lh) / 2;
       lines.forEach((line, i) => ctx.strokeText(line, tx, startY + i * lh));
     }
 
     ctx.fillStyle = l.color;
-    const lines = l.text.split('\n');
-    const lh = l.size * 1.2;
-    const startY = ty - ((lines.length - 1) * lh) / 2;
     lines.forEach((line, i) => ctx.fillText(line, tx, startY + i * lh));
     ctx.restore();
   });
