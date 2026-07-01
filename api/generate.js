@@ -11,31 +11,30 @@ module.exports = async function handler(req, res) {
     'yt-thumb':      'YouTube thumbnail (16:9)',
     'fb-post':       'Facebook post image',
     'ig-square':     'Instagram square post',
-    'ig-portrait':   'Instagram portrait post (4:5)',
+    'ig-portrait':   'Instagram Reels cover (9:16 portrait)',
     'ig-landscape':  'Instagram landscape post',
     'tiktok':        'TikTok video cover (9:16)',
   };
   const platformLabel = platformLabels[platform] || 'social media thumbnail';
 
-  const prompt = `You are a world-class viral content strategist and thumbnail copywriter — the kind that gets 10M+ views. Your job is to write thumbnail text that makes people STOP scrolling and CLICK immediately.
+  const prompt = `You are a thumbnail copywriter. Write punchy, click-worthy text for a ${platformLabel}.
 
-Platform: ${platformLabel}
 Topic: ${description}
 
-Use these proven viral formulas:
-- SHOCK: "Nobody Told Me This" / "I Was WRONG"
-- NUMBER: "5 Things Killing Your Growth"
-- BEFORE/AFTER: "From Broke to $10K"
-- QUESTION: "Why Is Nobody Talking About This?"
-- URGENCY: "Do This NOW Before It's Too Late"
-- CONTRAST: "Experts Are LYING To You"
+STRICT RULES:
+- The title MUST be directly relevant to the topic — do NOT make up unrelated stories or scenarios
+- Title: 3-5 words MAX, ALL CAPS, punchy and clickable. Keep it SHORT so it fits on screen.
+- Subtitle: 8-12 words, creates curiosity, stays on topic. Must be a complete readable sentence.
+- Extra: 2-3 words only — a short label like "SO CUTE", "MUST WATCH", "TOO FUNNY", "OMG"
 
-Write thumbnail text with:
-- title: 3-6 word ALL CAPS hook (emotionally charged, urgent, or shocking)
-- subtitle: 8-14 words that tease the result without giving it away (curiosity gap)
-- extra: 2-4 word power label like "MUST WATCH", "Life Changing", "#1 Secret"
+Good title examples for "dog playing in grass":
+- "WAFFLE FOUND SOMETHING!"
+- "HE LOVES THIS!"
+- "BEST DAY EVER"
 
-Use power words: NEVER, STOP, WARNING, FINALLY, SECRET, EXPOSED, TRUTH, INSTANTLY. Make it feel irresistible.`;
+Bad examples (too long, off-topic, nonsensical):
+- "WROTE MYSELF A FAINT" ← wrong, unrelated
+- "NEVER LET YOUR DOG DO THIS INCREDIBLE RECOVERY" ← too long`;
 
   try {
     const response = await fetch(
@@ -46,8 +45,8 @@ Use power words: NEVER, STOP, WARNING, FINALLY, SECRET, EXPOSED, TRUTH, INSTANTL
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: 1.0,
-            maxOutputTokens: 300,
+            temperature: 0.8,
+            maxOutputTokens: 200,
             responseMimeType: 'application/json',
             responseSchema: {
               type: 'object',
@@ -70,6 +69,14 @@ Use power words: NEVER, STOP, WARNING, FINALLY, SECRET, EXPOSED, TRUTH, INSTANTL
     if (!text) return res.status(500).json({ error: 'No response from AI' });
 
     const result = JSON.parse(text);
+
+    // Enforce title max 5 words — trim if AI goes over
+    if (result.title) {
+      const words = result.title.trim().split(/\s+/);
+      if (words.length > 5) result.title = words.slice(0, 5).join(' ');
+      result.title = result.title.toUpperCase();
+    }
+
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message || 'AI generation failed' });
