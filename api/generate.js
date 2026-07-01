@@ -22,29 +22,20 @@ module.exports = async function handler(req, res) {
 Platform: ${platformLabel}
 Topic: ${description}
 
-Study these high-performing thumbnail formulas and use them:
-- SHOCK/SURPRISE: "I Was WRONG About This" / "Nobody Told Me This"
-- NUMBER + PROMISE: "5 Things Killing Your Growth" / "3 Mistakes Costing You Money"
-- BEFORE/AFTER: "From Broke to $10K" / "Lost 20kg Doing THIS"
-- QUESTION HOOK: "Why Is Nobody Talking About This?" / "Is This REALLY Worth It?"
-- CHALLENGE/DARE: "I Tried This For 30 Days" / "We Tested 100 Strategies"
-- URGENCY/SECRET: "Do This NOW Before It's Too Late" / "The Secret They Don't Want You to Know"
-- CONTRAST: "Experts Are LYING To You" / "Stop Doing This (Do This Instead)"
+Use these proven viral formulas:
+- SHOCK: "Nobody Told Me This" / "I Was WRONG"
+- NUMBER: "5 Things Killing Your Growth"
+- BEFORE/AFTER: "From Broke to $10K"
+- QUESTION: "Why Is Nobody Talking About This?"
+- URGENCY: "Do This NOW Before It's Too Late"
+- CONTRAST: "Experts Are LYING To You"
 
-Return ONLY a JSON object:
-{
-  "title": "BOLD 3-6 WORD HOOK — ALL CAPS, emotionally charged, creates urgency or curiosity",
-  "subtitle": "One punchy line (8-14 words) — reveals the promise, tease the result, or twist the expectation. Make them NEED to know more.",
-  "extra": "2-4 word power label or CTA (e.g. 'MUST WATCH', 'Life Changing', '#1 Secret', 'You Won't Believe')"
-}
+Write thumbnail text with:
+- title: 3-6 word ALL CAPS hook (emotionally charged, urgent, or shocking)
+- subtitle: 8-14 words that tease the result without giving it away (curiosity gap)
+- extra: 2-4 word power label like "MUST WATCH", "Life Changing", "#1 Secret"
 
-Critical rules:
-- Title = the HOOK. Make it feel urgent, shocking, or irresistible. Use power words: NEVER, STOP, WARNING, FINALLY, SECRET, EXPOSED, TRUTH, INSTANTLY
-- Subtitle = the PAYOFF TEASE. Hint at the result without giving it away. Build curiosity gap.
-- Extra = the AMPLIFIER. A short punchy stamp that adds credibility or urgency.
-- Think like a tabloid headline meets a TED talk — provocative but real
-- No generic titles like "Tips for Success" — that gets zero clicks
-- No quotes inside values, no markdown, return raw JSON only`;
+Use power words: NEVER, STOP, WARNING, FINALLY, SECRET, EXPOSED, TRUTH, INSTANTLY. Make it feel irresistible.`;
 
   try {
     const response = await fetch(
@@ -54,23 +45,31 @@ Critical rules:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 1.0, maxOutputTokens: 300, topP: 0.95 }
+          generationConfig: {
+            temperature: 1.0,
+            maxOutputTokens: 500,
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: 'object',
+              properties: {
+                title:    { type: 'string' },
+                subtitle: { type: 'string' },
+                extra:    { type: 'string' }
+              },
+              required: ['title', 'subtitle', 'extra']
+            }
+          }
         })
       }
     );
 
     const data = await response.json();
-    // Surface API errors directly
     if (data.error) return res.status(500).json({ error: data.error.message || 'Gemini API error' });
+
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) return res.status(500).json({ error: 'No response from AI', raw: JSON.stringify(data).slice(0,300) });
+    if (!text) return res.status(500).json({ error: 'No response from AI' });
 
-    // Strip markdown code fences if present (gemini-2.5 wraps in ```json ... ```)
-    const stripped = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const jsonMatch = stripped.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return res.status(500).json({ error: 'Parse failed', raw: text.slice(0, 300) });
-
-    const result = JSON.parse(jsonMatch[0]);
+    const result = JSON.parse(text);
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message || 'AI generation failed' });
