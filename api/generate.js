@@ -39,7 +39,7 @@ Use power words: NEVER, STOP, WARNING, FINALLY, SECRET, EXPOSED, TRUTH, INSTANTL
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,7 +47,7 @@ Use power words: NEVER, STOP, WARNING, FINALLY, SECRET, EXPOSED, TRUTH, INSTANTL
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 1.0,
-            maxOutputTokens: 500,
+            maxOutputTokens: 300,
             responseMimeType: 'application/json',
             responseSchema: {
               type: 'object',
