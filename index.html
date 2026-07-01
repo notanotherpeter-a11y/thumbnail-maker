@@ -615,31 +615,31 @@ async function generateText() {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
-    // Pick safe Y positions based on platform aspect ratio
+    // Lower-third positions — subject face stays clear at top
     const isTall = ['ig-portrait','tiktok'].includes(platform);
-    const titleY    = isTall ? 38 : 42;
-    const subtitleY = isTall ? 52 : 58;
-    const extraY    = isTall ? 63 : 70;
+    const titleY    = isTall ? 72 : 58;
+    const subtitleY = isTall ? 83 : 70;
+    const extraY    = isTall ? 91 : 80;
 
     // Apply text + reset to safe centered positions
     if (data.title) {
       layers[0].text = data.title;
       layers[0].x = 50; layers[0].y = titleY;
-      layers[0].align = 'center'; layers[0].size = 90;
+      layers[0].align = 'center'; layers[0].size = 85;
       layers[0].color = '#ffffff'; layers[0].stroke = '#000000'; layers[0].strokeW = 4;
       layers[0].shadow = 'strong'; layers[0].font = 'Impact'; layers[0].weight = 'bold';
     }
     if (data.subtitle) {
       layers[1].text = data.subtitle;
       layers[1].x = 50; layers[1].y = subtitleY;
-      layers[1].align = 'center'; layers[1].size = 48;
+      layers[1].align = 'center'; layers[1].size = 38;
       layers[1].color = '#FFE033'; layers[1].stroke = '#000000'; layers[1].strokeW = 3;
       layers[1].shadow = 'strong'; layers[1].font = 'Arial'; layers[1].weight = 'bold';
     }
     if (data.extra) {
       layers[2].text = data.extra;
       layers[2].x = 50; layers[2].y = extraY;
-      layers[2].align = 'center'; layers[2].size = 38;
+      layers[2].align = 'center'; layers[2].size = 32;
       layers[2].color = '#ffffff'; layers[2].stroke = '#000000'; layers[2].strokeW = 2;
       layers[2].shadow = 'soft'; layers[2].font = 'Arial'; layers[2].weight = 'bold';
     }
