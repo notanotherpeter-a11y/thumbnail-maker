@@ -17,23 +17,34 @@ module.exports = async function handler(req, res) {
   };
   const platformLabel = platformLabels[platform] || 'social media thumbnail';
 
-  const prompt = `You are a thumbnail copywriter. Create punchy, click-worthy text for a ${platformLabel}.
+  const prompt = `You are a world-class viral content strategist and thumbnail copywriter — the kind that gets 10M+ views. Your job is to write thumbnail text that makes people STOP scrolling and CLICK immediately.
 
+Platform: ${platformLabel}
 Topic: ${description}
 
-Return ONLY a JSON object with exactly these fields:
+Study these high-performing thumbnail formulas and use them:
+- SHOCK/SURPRISE: "I Was WRONG About This" / "Nobody Told Me This"
+- NUMBER + PROMISE: "5 Things Killing Your Growth" / "3 Mistakes Costing You Money"
+- BEFORE/AFTER: "From Broke to $10K" / "Lost 20kg Doing THIS"
+- QUESTION HOOK: "Why Is Nobody Talking About This?" / "Is This REALLY Worth It?"
+- CHALLENGE/DARE: "I Tried This For 30 Days" / "We Tested 100 Strategies"
+- URGENCY/SECRET: "Do This NOW Before It's Too Late" / "The Secret They Don't Want You to Know"
+- CONTRAST: "Experts Are LYING To You" / "Stop Doing This (Do This Instead)"
+
+Return ONLY a JSON object:
 {
-  "title": "MAIN HEADLINE (3-6 words, ALL CAPS, very bold and clickable)",
-  "subtitle": "Supporting line that adds context or curiosity (6-12 words, title case)",
-  "extra": "Short CTA or label (2-5 words, e.g. 'Watch Now', '#1 Tip', 'Episode 1')"
+  "title": "BOLD 3-6 WORD HOOK — ALL CAPS, emotionally charged, creates urgency or curiosity",
+  "subtitle": "One punchy line (8-14 words) — reveals the promise, tease the result, or twist the expectation. Make them NEED to know more.",
+  "extra": "2-4 word power label or CTA (e.g. 'MUST WATCH', 'Life Changing', '#1 Secret', 'You Won't Believe')"
 }
 
-Rules:
-- Title must be SHORT and PUNCHY — it's the biggest text, so make every word count
-- Subtitle creates curiosity or adds value without repeating the title
-- Extra is optional context or call to action
-- Write for humans scrolling fast — make them STOP and click
-- No quotes inside the values, no markdown, return raw JSON only`;
+Critical rules:
+- Title = the HOOK. Make it feel urgent, shocking, or irresistible. Use power words: NEVER, STOP, WARNING, FINALLY, SECRET, EXPOSED, TRUTH, INSTANTLY
+- Subtitle = the PAYOFF TEASE. Hint at the result without giving it away. Build curiosity gap.
+- Extra = the AMPLIFIER. A short punchy stamp that adds credibility or urgency.
+- Think like a tabloid headline meets a TED talk — provocative but real
+- No generic titles like "Tips for Success" — that gets zero clicks
+- No quotes inside values, no markdown, return raw JSON only`;
 
   try {
     const response = await fetch(
@@ -43,7 +54,7 @@ Rules:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.9, maxOutputTokens: 250 }
+          generationConfig: { temperature: 1.1, maxOutputTokens: 300, topP: 0.95 }
         })
       }
     );
