@@ -60,13 +60,15 @@ Critical rules:
     );
 
     const data = await response.json();
+    // Surface API errors directly
+    if (data.error) return res.status(500).json({ error: data.error.message || 'Gemini API error' });
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) return res.status(500).json({ error: 'No response from AI' });
+    if (!text) return res.status(500).json({ error: 'No response from AI', raw: JSON.stringify(data).slice(0,300) });
 
     // Strip markdown code fences if present (gemini-2.5 wraps in ```json ... ```)
-    const stripped = text.replace(/```(?:json)?\n?/g, '').trim();
+    const stripped = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     const jsonMatch = stripped.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return res.status(500).json({ error: 'Could not parse AI response' });
+    if (!jsonMatch) return res.status(500).json({ error: 'Parse failed', raw: text.slice(0, 300) });
 
     const result = JSON.parse(jsonMatch[0]);
     res.json(result);
