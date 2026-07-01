@@ -484,7 +484,7 @@ function render() {
 
     const tx = W * l.x / 100;
     const ty = H * l.y / 100;
-    const maxW = W * 0.92; // 4% padding each side
+    const maxW = W * 0.86; // 7% safe margin each side — keeps text off edges on all platforms
 
     // Word-wrap: split manual newlines first, then wrap each line to maxW
     function wrapLine(text) {
@@ -615,13 +615,36 @@ async function generateText() {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
-    // Apply to layers
-    if (data.title)    { layers[0].text = data.title; }
-    if (data.subtitle) { layers[1].text = data.subtitle; }
-    if (data.extra)    { layers[2].text = data.extra; }
+    // Pick safe Y positions based on platform aspect ratio
+    const isTall = ['ig-portrait','tiktok'].includes(platform);
+    const titleY    = isTall ? 38 : 42;
+    const subtitleY = isTall ? 52 : 58;
+    const extraY    = isTall ? 63 : 70;
 
-    // Refresh active layer UI
-    setTextLayer(0); // always show Title layer after generation
+    // Apply text + reset to safe centered positions
+    if (data.title) {
+      layers[0].text = data.title;
+      layers[0].x = 50; layers[0].y = titleY;
+      layers[0].align = 'center'; layers[0].size = 90;
+      layers[0].color = '#ffffff'; layers[0].stroke = '#000000'; layers[0].strokeW = 4;
+      layers[0].shadow = 'strong'; layers[0].font = 'Impact'; layers[0].weight = 'bold';
+    }
+    if (data.subtitle) {
+      layers[1].text = data.subtitle;
+      layers[1].x = 50; layers[1].y = subtitleY;
+      layers[1].align = 'center'; layers[1].size = 48;
+      layers[1].color = '#FFE033'; layers[1].stroke = '#000000'; layers[1].strokeW = 3;
+      layers[1].shadow = 'strong'; layers[1].font = 'Arial'; layers[1].weight = 'bold';
+    }
+    if (data.extra) {
+      layers[2].text = data.extra;
+      layers[2].x = 50; layers[2].y = extraY;
+      layers[2].align = 'center'; layers[2].size = 38;
+      layers[2].color = '#ffffff'; layers[2].stroke = '#000000'; layers[2].strokeW = 2;
+      layers[2].shadow = 'soft'; layers[2].font = 'Arial'; layers[2].weight = 'bold';
+    }
+
+    setTextLayer(0);
     render();
 
     status.className = 'gen-status success';
