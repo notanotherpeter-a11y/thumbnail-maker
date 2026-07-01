@@ -508,18 +508,19 @@ function render() {
     const blockH = (lines.length - 1) * lh;
     const startY = ty - blockH / 2;
 
-    // shadow
-    if (l.shadow === 'soft') { ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 12; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2; }
-    else if (l.shadow === 'strong') { ctx.shadowColor = 'rgba(0,0,0,0.95)'; ctx.shadowBlur = 20; ctx.shadowOffsetX = 4; ctx.shadowOffsetY = 4; }
-    else if (l.shadow === 'outline') { ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; }
-
-    // stroke
+    // stroke first — shadow OFF so it doesn't bleed onto the outline
     if (l.strokeW > 0) {
+      ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
       ctx.lineWidth = l.strokeW * 2;
       ctx.strokeStyle = l.stroke;
       ctx.lineJoin = 'round';
       lines.forEach((line, i) => ctx.strokeText(line, tx, startY + i * lh));
     }
+
+    // fill with shadow applied only to the fill pass
+    if (l.shadow === 'soft')        { ctx.shadowColor = 'rgba(0,0,0,0.75)'; ctx.shadowBlur = 14; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2; }
+    else if (l.shadow === 'strong') { ctx.shadowColor = 'rgba(0,0,0,0.95)'; ctx.shadowBlur = 22; ctx.shadowOffsetX = 4; ctx.shadowOffsetY = 4; }
+    else                            { ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; }
 
     ctx.fillStyle = l.color;
     lines.forEach((line, i) => ctx.fillText(line, tx, startY + i * lh));
@@ -620,7 +621,7 @@ async function generateText() {
     if (data.extra)    { layers[2].text = data.extra; }
 
     // Refresh active layer UI
-    setTextLayer(activeLayer);
+    setTextLayer(0); // always show Title layer after generation
     render();
 
     status.className = 'gen-status success';
